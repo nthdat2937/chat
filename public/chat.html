@@ -680,10 +680,23 @@
     }
 
     function kickUser(userToKick) {
+        const adminToken = localStorage.getItem('adminSessionToken');
+        if (!adminToken) {
+            alert('Bạn không có quyền kick người dùng!');
+            return;
+        }
+
         if (confirm(`Bạn có chắc muốn kick người dùng ${userToKick}?`)) {
-            socket.emit('kick user', userToKick);
+            socket.emit('kick user', {
+                userToKick,
+                adminToken
+            });
         }
     }
+
+    socket.on('kick error', (data) => {
+        alert(data.message);
+    });
 
     async function handleFileUpload(event) {
         const files = Array.from(event.target.files);
