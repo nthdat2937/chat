@@ -543,6 +543,27 @@
                 padding: 12px 20px;
             }
         }
+
+        .delete-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #ef4444;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 8px;
+        }
+
+        .message:hover .delete-btn {
+            display: inline-block;
+        }
+
+        .delete-btn:hover {
+            background: #fee2e2;
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
@@ -750,16 +771,22 @@
     socket.on('chat message', (msg) => {
         const div = document.createElement('div');
         div.className = `message ${msg.username === username ? 'sent' : 'received'}`;
-        
+        div.dataset.id = msg.id;
+
+        const deleteButton = adminSessionToken
+            ? `<button class="delete-btn" onclick="deleteMessage('${msg.id}')">X</button>`
+            : '';
+
         div.innerHTML = `
             <div class="message-bubble">
                 <span>${msg.text}</span>
+                ${deleteButton}
             </div>
             <div class="message-info">
                 ${msg.username} • ${msg.time}
             </div>
         `;
-        
+
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     });
@@ -802,6 +829,19 @@
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     });
+
+    socket.on('message deleted', (data) => {
+        const messageElement = document.querySelector(`.message[data-id="${data.id}"]`);
+        if (messageElement) {
+            messageElement.remove();
+        }
+    });
+
+    function deleteMessage(messageId) {
+        if (confirm('Bạn có chắc muốn xóa tin nhắn này?')) {
+            socket.emit('delete message', messageId);
+        }
+    }
 
     socket.on('online users', (users) => {
         userList.innerHTML = '';
