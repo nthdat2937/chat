@@ -52,9 +52,6 @@ setInterval(() => {
 const onlineUsers = new Map();
 const authenticatedAdmins = new Set();
 
-// Store messages in memory for simplicity
-const messages = [];
-
 // Routes
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
@@ -144,110 +141,88 @@ io.on('connection', (socket) => {
     let adminSessionToken = null;
 
     socket.on('join chat', (data) => {
-        currentUser = data.username;
-        socket.username = data.username;
-        
-        // Enhanced admin verification
-        if (currentUser === ADMIN_USERNAME && data.sessionToken && authenticatedAdmins.has(data.sessionToken)) {
-            isAdmin = true;
-            adminSessionToken = data.sessionToken;
-            console.log(`Admin ${currentUser} authenticated successfully`);
-        } else {
-            isAdmin = false;
-            adminSessionToken = null;
-        }
+    currentUser = data.username;
+    socket.username = data.username;
+    
+    // Enhanced admin verification
+    if (currentUser === ADMIN_USERNAME && data.sessionToken && authenticatedAdmins.has(data.sessionToken)) {
+        isAdmin = true;
+        adminSessionToken = data.sessionToken;
+        console.log(`Admin ${currentUser} authenticated successfully`);
+    } else {
+        isAdmin = false;
+        adminSessionToken = null;
+    }
 
-        onlineUsers.set(currentUser, {
-            socketId: socket.id,
-            loginTime: data.loginTime,
-            isAdmin
-        });
+    onlineUsers.set(currentUser, {
+        socketId: socket.id,
+        loginTime: data.loginTime,
+        isAdmin
+    });
 
-        io.emit('online users', Array.from(onlineUsers));
-        
-        socket.broadcast.emit('user joined', {
-            username: currentUser,
+    io.emit('online users', Array.from(onlineUsers));
+    
+    socket.broadcast.emit('user joined', {
+        username: currentUser,
+        time: new Date().toISOString().replace('T', ' ').slice(0, 19)
+    });
+
+    console.log(`User ${currentUser} joined the chat${isAdmin ? ' as admin' : ''}`);
+});
+
+    // Handle kick user event
+    socket.on('kick user', (data) => {
+    // Verify that the kicker is actually the admin
+    if (currentUser !== ADMIN_USERNAME || !isAdmin || !adminSessionToken || !authenticatedAdmins.has(adminSessionToken)) {
+        console.log('Unauthorized kick attempt by:', currentUser);
+        return;
+    }
+
+    const userToKick = data.userToKick || data; // Support both object and string format
+    const kickedUserData = onlineUsers.get(userToKick);
+    
+    if (kickedUserData && userToKick !== ADMIN_USERNAME) { // Prevent admin from being kicked
+        // Emit kick event to the specific user
+        io.to(kickedUserData.socketId).emit('kicked', {
+            byUser: currentUser,
             time: new Date().toISOString().replace('T', ' ').slice(0, 19)
         });
 
-        console.log(`User ${currentUser} joined the chat${isAdmin ? ' as admin' : ''}`);
-    });
+        // Broadcast kick notification to all users
+        io.emit('user kicked', {
+            username: userToKick,
+            byUser: currentUser,
+            time: new Date().toISOString().replace('T', ' ').slice(0, 19)
+        });
 
+        // Remove user from online users
+        onlineUsers.delete(userToKick);
+
+        // Force disconnect the kicked user
+        const kickedSocket = io.sockets.sockets.get(kickedUserData.socketId);
+        if (kickedSocket) {
+            kickedSocket.disconnect(true);
+        }
+
+        // Update online users list for everyone
+        io.emit('online users', Array.from(onlineUsers));
+        
+        console.log(`User ${userToKick} was kicked by admin ${currentUser}`);
+    } else {
+        console.log(`Failed to kick user ${userToKick} (not found or is admin)`);
+    }
+});
+  
     socket.on('chat message', (msg) => {
         if (!msg.trim()) return;
 
-        const messageData = {
-            id: Math.random().toString(36).substring(2), // Generate a unique ID
+        io.emit('chat message', {
             username: currentUser,
             text: msg,
             time: new Date().toISOString().replace('T', ' ').slice(0, 19)
-        };
-
-        messages.push(messageData);
-
-        // Emit the message to all connected clients, including the sender
-        io.emit('chat message', messageData);
+        });
     });
 
-    socket.on('delete message', (messageId) => {
-        // Verify that the user is an admin
-        if (currentUser !== ADMIN_USERNAME || !isAdmin || !adminSessionToken || !authenticatedAdmins.has(adminSessionToken)) {
-            console.log('Unauthorized delete attempt by:', currentUser);
-            return;
-        }
-
-        const messageIndex = messages.findIndex((msg) => msg.id === messageId);
-        if (messageIndex !== -1) {
-            const [deletedMessage] = messages.splice(messageIndex, 1);
-            io.emit('message deleted', { id: deletedMessage.id });
-            console.log(`Message with ID ${messageId} deleted by admin ${currentUser}`);
-        } else {
-            console.log(`Message with ID ${messageId} not found`);
-        }
-    });
-
-    socket.on('kick user', (data) => {
-        // Verify that the kicker is actually the admin
-        if (currentUser !== ADMIN_USERNAME || !isAdmin || !adminSessionToken || !authenticatedAdmins.has(adminSessionToken)) {
-            console.log('Unauthorized kick attempt by:', currentUser);
-            return;
-        }
-
-        const userToKick = data.userToKick || data; // Support both object and string format
-        const kickedUserData = onlineUsers.get(userToKick);
-        
-        if (kickedUserData && userToKick !== ADMIN_USERNAME) { // Prevent admin from being kicked
-            // Emit kick event to the specific user
-            io.to(kickedUserData.socketId).emit('kicked', {
-                byUser: currentUser,
-                time: new Date().toISOString().replace('T', ' ').slice(0, 19)
-            });
-
-            // Broadcast kick notification to all users
-            io.emit('user kicked', {
-                username: userToKick,
-                byUser: currentUser,
-                time: new Date().toISOString().replace('T', ' ').slice(0, 19)
-            });
-
-            // Remove user from online users
-            onlineUsers.delete(userToKick);
-
-            // Force disconnect the kicked user
-            const kickedSocket = io.sockets.sockets.get(kickedUserData.socketId);
-            if (kickedSocket) {
-                kickedSocket.disconnect(true);
-            }
-
-            // Update online users list for everyone
-            io.emit('online users', Array.from(onlineUsers));
-            
-            console.log(`User ${userToKick} was kicked by admin ${currentUser}`);
-        } else {
-            console.log(`Failed to kick user ${userToKick} (not found or is admin)`);
-        }
-    });
-  
     socket.on('file message', (fileData) => {
         io.emit('file message', {
             username: currentUser,
