@@ -303,7 +303,7 @@
             width: 100%;
             clear: both;
             background: rgba(59, 130, 246, 0.1);
-            padding: 10px;
+            padding: 5px;
             border-radius: 8px;
             word-wrap: break-word;
             overflow-wrap: break-word;
@@ -343,6 +343,13 @@
             flex: 1;
             display: flex;
             gap: 10px;
+            align-items: center; /* Add this */
+        }
+
+        .input-area .button-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
         #m {
@@ -385,6 +392,7 @@
         .file-upload {
             position: relative;
             overflow: hidden;
+            margin: 0;
         }
 
         .file-upload input[type=file] {
@@ -754,18 +762,20 @@
                 <form id="form" onsubmit="return sendMessage(event)">
                     <input id="m" autocomplete="off" placeholder="Nhập tin nhắn..." 
                            oninput="handleTyping()" maxlength="60"/>
-                    <button type="submit">
-                        <i class="fas fa-paper-plane"></i>
-                        Gửi
-                    </button>
+                    <div class="button-group">
+                        <button type="submit">
+                            <i class="fas fa-paper-plane"></i>
+                            Gửi
+                        </button>
+                        <div class="file-upload">
+                            <button type="button">
+                                <i class="fas fa-paperclip"></i>
+                                File
+                            </button>
+                            <input type="file" multiple onchange="handleFileUpload(event)">
+                        </div>
+                    </div>
                 </form>
-                <div class="file-upload">
-                    <button>
-                        <i class="fas fa-paperclip"></i>
-                        File
-                    </button>
-                    <input type="file" multiple onchange="handleFileUpload(event)">
-                </div>
             </div>
         </div>
     </div>
