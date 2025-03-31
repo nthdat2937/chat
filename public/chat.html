@@ -107,6 +107,7 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         .online-users h3 {
@@ -503,6 +504,18 @@
             transform: rotate(90deg);
         }
 
+        .close-panel-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #ff009b;
+            padding: 4px;
+            cursor: pointer;
+            display: none;  /* Hidden by default, shown on mobile */
+        }
+
         @keyframes fadeIn {
             from { 
                 opacity: 0; 
@@ -557,6 +570,7 @@
                 cursor: pointer;
                 font-size: 0.9em;
                 backdrop-filter: blur(10px);
+                order: 2;
             }
 
             .toggle-users-btn:hover {
@@ -564,10 +578,36 @@
             }
 
             .header {
-                flex-direction: row;
-                flex-wrap: wrap;
+                flex-direction: row !important; /* Override previous column direction */
+                justify-content: space-between;
+                align-items: center;
                 padding: 8px 16px;
                 gap: 8px;
+                height: auto;
+            }
+
+            .header .user-info {
+                flex-shrink: 0;
+            }
+
+            .current-time {
+                display: none; /* Hide on mobile to save space */
+            }
+
+            .logout-btn {
+                order: 3;
+                margin: 0;
+                padding: 6px 10px;
+                font-size: 0.85em;
+                background: rgba(255, 255, 255, 0.08);
+            }
+
+            .logout-btn i {
+                margin: 0; /* Remove icon margin */
+            }
+            
+            .logout-btn span {
+                display: none; /* Hide "Đăng xuất" text */
             }
 
             .chat-container {
@@ -622,8 +662,11 @@
             }
 
             .logout-btn {
-                width: 100%;
-                justify-content: center;
+                width: auto;
+                padding: 6px 12px;
+                font-size: 0.85em;
+                margin-left: auto;
+                background: rgba(255, 255, 255, 0.08);
             }
 
             .message-bubble > span {
@@ -633,6 +676,10 @@
             .typing-indicator {
                 font-size: 0.85em;
                 padding: 8px 12px;
+            }
+
+            .close-panel-btn {
+                display: block;  /* Show on mobile */
             }
         }
 
@@ -671,7 +718,7 @@
         <span class="current-time" id="currentTime">2025-03-30 04:07:10</span>
         <button class="logout-btn" onclick="logout()">
             <i class="fas fa-sign-out-alt"></i>
-            Đăng xuất
+            <span>Đăng xuất</span>
         </button>
     </div>
 
@@ -681,6 +728,9 @@
                 <i class="fas fa-users"></i>
                 Người dùng trực tuyến
             </h3>
+            <button class="close-panel-btn" onclick="toggleUsers()">
+                <i class="fas fa-times"></i>
+            </button>
             <div id="userList" class="user-list"></div>
         </div>
 
@@ -799,12 +849,8 @@
     function kickUser(userToKick) {
         const adminToken = localStorage.getItem('adminSessionToken');
         if (!adminToken) {
-            // alert('Bạn không có quyền kick người dùng!');
-            // return;
-            socket.emit('kick user', {
-                userToKick,
-                adminToken
-            });
+            alert('Bạn không có quyền kick người dùng!');
+            return;
         }
 
         if (confirm(`Bạn có chắc muốn kick người dùng ${userToKick}?`)) {
