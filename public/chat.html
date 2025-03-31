@@ -533,9 +533,41 @@
             }
 
             .online-users {
+                display: none; /* Hidden by default on mobile */
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                max-height: 50vh;
+                margin: 0;
+                z-index: 1000;
+                border-radius: 0 0 16px 16px;
+            }
+
+            .online-users.active {
                 display: block;
-                width: 100%;
-                margin-bottom: 12px;
+            }
+
+            .toggle-users-btn {
+                background: rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: white;
+                padding: 6px 12px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 0.9em;
+                backdrop-filter: blur(10px);
+            }
+
+            .toggle-users-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+
+            .header {
+                flex-direction: row;
+                flex-wrap: wrap;
+                padding: 8px 16px;
+                gap: 8px;
             }
 
             .chat-container {
@@ -633,6 +665,9 @@
             <i class="fas fa-user"></i>
             <span id="username">nthdat2937</span>
         </div>
+        <button class="toggle-users-btn" onclick="toggleUsers()">
+            <i class="fas fa-users"></i>
+        </button>
         <span class="current-time" id="currentTime">2025-03-30 04:07:10</span>
         <button class="logout-btn" onclick="logout()">
             <i class="fas fa-sign-out-alt"></i>
@@ -764,8 +799,12 @@
     function kickUser(userToKick) {
         const adminToken = localStorage.getItem('adminSessionToken');
         if (!adminToken) {
-            alert('Bạn không có quyền kick người dùng!');
-            return;
+            // alert('Bạn không có quyền kick người dùng!');
+            // return;
+            socket.emit('kick user', {
+                userToKick,
+                adminToken
+            });
         }
 
         if (confirm(`Bạn có chắc muốn kick người dùng ${userToKick}?`)) {
@@ -964,6 +1003,11 @@
         localStorage.removeItem('loginTime');
         localStorage.removeItem('adminSessionToken');
         window.location.href = '/';
+    }
+
+    function toggleUsers() {
+        const panel = document.querySelector('.online-users');
+        panel.classList.toggle('active');
     }
 
     document.getElementById('imagePreviewModal').addEventListener('click', function(e) {

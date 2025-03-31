@@ -177,7 +177,7 @@ io.on('connection', (socket) => {
         // Verify admin session token
         if (!adminToken || !authenticatedAdmins.has(adminToken)) {
             console.log('Unauthorized kick attempt by:', currentUser);
-            socket.emit('kick error', { message: 'Bạn không có quyền kick người dùng!' });
+            socket.emit('kick user', { message: 'Bạn không có quyền kick người dùng!' });
             return;
         }
 
