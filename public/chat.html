@@ -28,16 +28,16 @@
         #username {
           font-size: 0.9em;
           border: 1px solid rgba(255, 255, 255, 0.2);
-          padding: 8% 10%;
+          padding: 5px 10px;
           border-radius: 10px;
           background-color: #e4e4e44a;
           backdrop-filter: blur(10px);
           cursor: pointer;
           transition: all 0.2s ease;
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
           align-items: center;
-          gap: 5px;
+          gap: 8px;
         }
 
         .header {
@@ -839,8 +839,8 @@
     }
 
     document.getElementById('username').innerHTML = `
-        <div>${username}</div>
-        <span class="role-badge ${!adminSessionToken ? 'member' : ''}">
+        ${username}
+        <span class="role-badge ${adminSessionToken ? '' : 'member'}">
             ${adminSessionToken ? 'Admin' : 'Member'}
         </span>
     `;
@@ -1061,7 +1061,7 @@
             div.innerHTML = `
                 <i class="fas fa-user"></i>
                 <span class="user-name">
-                    <div>${userName}</div>
+                    ${userName}
                     <span class="role-badge ${!userData.sessionToken ? 'member' : ''}">
                         ${userData.sessionToken ? 'Admin' : 'Member'}
                     </span>
