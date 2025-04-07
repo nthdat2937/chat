@@ -563,19 +563,8 @@
             }
 
             .toggle-users-btn {
-                background: rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                color: white;
-                padding: 6px 12px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 0.9em;
-                backdrop-filter: blur(10px);
+                display: block; /* Chỉ hiển thị trên mobile */
                 order: 2;
-            }
-
-            .toggle-users-btn:hover {
-                background: rgba(255, 255, 255, 0.2);
             }
 
             .header {
@@ -704,6 +693,10 @@
             button {
                 font-size: 0.9em;
             }
+
+            .toggle-users-btn {
+                display: none !important; /* Force ẩn trên desktop */
+            }
         }
 
         .private-chat-modal {
@@ -817,7 +810,7 @@
             padding: 3px 10px;
             border-radius: 10px;
             background: linear-gradient(135deg, #ff0000, #cc0000);
-            color: #ffffff;
+            color: #ffffff !important;
             font-weight: bold;
             white-space: nowrap;
             text-transform: uppercase;
@@ -832,6 +825,18 @@
             box-shadow: 0 2px 4px rgba(255, 215, 0, 0.2);
             color: #ffffff;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-users-btn {
+            display: none; /* Ẩn mặc định */
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            backdrop-filter: blur(10px);
         }
     </style>
 </head>
