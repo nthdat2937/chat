@@ -28,12 +28,16 @@
         #username {
           font-size: 0.9em;
           border: 1px solid rgba(255, 255, 255, 0.2);
-          padding: 10%;
+          padding: 8% 10%;
           border-radius: 10px;
           background-color: #e4e4e44a;
           backdrop-filter: blur(10px);
           cursor: pointer;
           transition: all 0.2s ease;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 5px;
         }
 
         .header {
@@ -725,6 +729,37 @@
             -ms-user-select: text;
             user-select: text;
         }
+
+        /* Prevent image dragging */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            pointer-events: none;
+        }
+
+        .role-badge {
+            font-size: 0.75em;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #ff00d4, #00b3ff);
+            color: white;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .role-badge.member {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+        }
+
+        .user-item span.user-name {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+        }
     </style>
 </head>
 <body>
@@ -803,7 +838,12 @@
         window.location.href = '/';
     }
 
-    document.getElementById('username').textContent = username;
+    document.getElementById('username').innerHTML = `
+        <div>${username}</div>
+        <span class="role-badge ${!adminSessionToken ? 'member' : ''}">
+            ${adminSessionToken ? 'Admin' : 'Member'}
+        </span>
+    `;
 
     function updateTime() {
         const now = new Date();
@@ -973,9 +1013,12 @@
             div.innerHTML = `
                 <div class="message-bubble">
                     <div class="image-message">
-                        <img src="${msg.file.path}" alt="${msg.file.originalName || msg.file.filename}" 
+                        <img src="${msg.file.path}" 
+                             alt="${msg.file.originalName || msg.file.filename}" 
                              onclick="showImagePreview('${msg.file.path}')"
-                             loading="lazy">
+                             loading="lazy"
+                             draggable="false"
+                             oncontextmenu="return false;">
                     </div>
                 </div>
                 <div class="message-info">
@@ -1017,7 +1060,12 @@
             
             div.innerHTML = `
                 <i class="fas fa-user"></i>
-                <span>${userName}</span>
+                <span class="user-name">
+                    <div>${userName}</div>
+                    <span class="role-badge ${!userData.sessionToken ? 'member' : ''}">
+                        ${userData.sessionToken ? 'Admin' : 'Member'}
+                    </span>
+                </span>
                 ${kickButton}
             `;
             userList.appendChild(div);
