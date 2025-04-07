@@ -240,6 +240,19 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('user stop typing');
     });
 
+    socket.on('private message', (data) => {
+        const targetSocket = Array.from(io.sockets.sockets.values())
+            .find(s => s.username === data.to);
+        
+        if (targetSocket) {
+            targetSocket.emit('private message', {
+                from: socket.username,
+                message: data.message,
+                time: new Date().toLocaleTimeString()
+            });
+        }
+    });
+
     socket.on('disconnect', () => {
         if (currentUser) {
             if (adminSessionToken) {
