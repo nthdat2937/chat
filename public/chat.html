@@ -28,16 +28,12 @@
         #username {
           font-size: 0.9em;
           border: 1px solid rgba(255, 255, 255, 0.2);
-          padding: 5px 10px;
+          padding: 10%;
           border-radius: 10px;
           background-color: #e4e4e44a;
           backdrop-filter: blur(10px);
           cursor: pointer;
           transition: all 0.2s ease;
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          gap: 8px;
         }
 
         .header {
@@ -713,60 +709,6 @@
                 display: none; /* Ensure it's hidden on desktop */
             }
         }
-
-        /* Prevent text selection */
-        * {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        /* Allow text selection in input fields */
-        input, textarea {
-            -webkit-user-select: text;
-            -moz-user-select: text;
-            -ms-user-select: text;
-            user-select: text;
-        }
-
-        /* Prevent image dragging */
-        img {
-            -webkit-user-drag: none;
-            -khtml-user-drag: none;
-            -moz-user-drag: none;
-            -o-user-drag: none;
-            user-drag: none;
-            pointer-events: none;
-        }
-
-        .role-badge {
-            font-size: 0.75em;
-            padding: 2px 8px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #ff00d4, #00b3ff);
-            color: white;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-
-        .role-badge.member {
-            background: linear-gradient(135deg, #00c6ff, #0072ff);
-        }
-
-        .user-item span.user-name {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .user-name {
-            display: flex;
-            flex-direction: row !important;
-            align-items: center;
-            gap: 8px;
-        }
     </style>
 </head>
 <body>
@@ -845,12 +787,7 @@
         window.location.href = '/';
     }
 
-    document.getElementById('username').innerHTML = `
-        ${username}
-        <span class="role-badge ${adminSessionToken ? '' : 'member'}">
-            ${adminSessionToken ? 'Admin' : 'Member'}
-        </span>
-    `;
+    document.getElementById('username').textContent = username;
 
     function updateTime() {
         const now = new Date();
@@ -1020,12 +957,9 @@
             div.innerHTML = `
                 <div class="message-bubble">
                     <div class="image-message">
-                        <img src="${msg.file.path}" 
-                             alt="${msg.file.originalName || msg.file.filename}" 
+                        <img src="${msg.file.path}" alt="${msg.file.originalName || msg.file.filename}" 
                              onclick="showImagePreview('${msg.file.path}')"
-                             loading="lazy"
-                             draggable="false"
-                             oncontextmenu="return false;">
+                             loading="lazy">
                     </div>
                 </div>
                 <div class="message-info">
@@ -1065,24 +999,9 @@
                 userName !== username
             ) ? `<a class="kick-btn" onclick="kickUser('${userName}')">x</a>`:'';
             
-            // Kiểm tra vai trò của người dùng
-            let isAdmin = false;
-            if (userName === 'nthdat2937') { // Hardcode admin username
-                isAdmin = true;
-            } else {
-                isAdmin = userName === username ? 
-                    !!localStorage.getItem('adminSessionToken') : 
-                    !!(userData && userData.sessionToken);
-            }
-            
             div.innerHTML = `
                 <i class="fas fa-user"></i>
-                <span class="user-name">
-                    ${userName}
-                    <span class="role-badge ${!isAdmin ? 'member' : ''}">
-                        ${isAdmin ? 'Admin' : 'Member'}
-                    </span>
-                </span>
+                <span>${userName}</span>
                 ${kickButton}
             `;
             userList.appendChild(div);
@@ -1152,55 +1071,6 @@
         e.preventDefault();
         e.returnValue = '';
     });
-
-    // Disable right click
-    document.addEventListener('contextmenu', e => e.preventDefault());
-
-    // Disable keyboard shortcuts and dev tools
-    document.addEventListener('keydown', function(e) {
-        // Disable F12
-        if(e.key === 'F12') {
-            e.preventDefault();
-        }
-
-        // Disable Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
-        if(e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
-            e.preventDefault();
-        }
-
-        // Disable Ctrl+U
-        if(e.ctrlKey && e.key === 'u') {
-            e.preventDefault();
-        }
-    });
-
-    // Remove the problematic interval check
-    // setInterval(() => {
-    //     const devtools = /./;
-    //     devtools.toString = function() {
-    //         window.location.href = '/';
-    //     }
-    //     console.log('%c', devtools);
-    // }, 1000);
-
-    // Add better DevTools detection
-    let devtools = false;
-    const threshold = 160;
-
-    const emitCheck = () => {
-        const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-        const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-        if (widthThreshold || heightThreshold) {
-            if (!devtools) {
-                devtools = true;
-                alert('Vui lòng không mở DevTools!');
-            }
-        } else {
-            devtools = false;
-        }
-    }
-
-    setInterval(emitCheck, 1000);
-</script>
+    </script>
 </body>
 </html>
