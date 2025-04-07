@@ -153,7 +153,6 @@
             transition: all 0.2s ease;
             position: relative;
             margin: 0 0 10px 0;
-            cursor: pointer;
         }
 
         .user-item:hover {
@@ -517,6 +516,18 @@
             display: none;  /* Hidden by default, shown on mobile */
         }
 
+        .toggle-users-btn {
+            display: none; /* Hidden by default */
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            backdrop-filter: blur(10px);
+        }
+
         @keyframes fadeIn {
             from { 
                 opacity: 0; 
@@ -563,19 +574,8 @@
             }
 
             .toggle-users-btn {
-                background: rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                color: white;
-                padding: 6px 12px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 0.9em;
-                backdrop-filter: blur(10px);
+                display: block; /* Show only on mobile */
                 order: 2;
-            }
-
-            .toggle-users-btn:hover {
-                background: rgba(255, 255, 255, 0.2);
             }
 
             .header {
@@ -704,87 +704,9 @@
             button {
                 font-size: 0.9em;
             }
-        }
 
-        .private-chat-modal {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 300px;
-            height: 400px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 900;
-            flex-direction: column;
-        }
-
-        .private-chat-header {
-            padding: 12px;
-            background: linear-gradient(135deg, #ff00a7, #003aba);
-            color: white;
-            border-radius: 12px 12px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .private-chat-header h4 {
-            margin: 0;
-            font-size: 0.9em;
-        }
-
-        .private-chat-close {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            padding: 4px;
-            font-size: 1.1em;
-        }
-
-        .private-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px;
-            background: #f8fafc;
-        }
-
-        .private-chat-input {
-            padding: 12px;
-            border-top: 1px solid #f1f5f9;
-            display: flex;
-            gap: 8px;
-        }
-
-        .private-chat-input input {
-            flex: 1;
-            padding: 8px 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 20px;
-            font-size: 0.9em;
-        }
-
-        .private-chat-input button {
-            padding: 8px 12px;
-        }
-
-        .user-item {
-            cursor: pointer;
-        }
-
-        .user-item:hover {
-            background: #f1f5f9;
-        }
-
-        @media (max-width: 768px) {
-            .private-chat-modal {
-                width: 100%;
-                height: 100%;
-                bottom: 0;
-                right: 0;
-                border-radius: 0;
+            .toggle-users-btn {
+                display: none; /* Ensure it's hidden on desktop */
             }
         }
     </style>
@@ -847,22 +769,6 @@
         <img id="previewImage" src="" alt="Preview">
     </div>
 
-    <div class="private-chat-modal" id="privateChatModal">
-        <div class="private-chat-header">
-            <h4 id="privateChatTitle">Chat với ...</h4>
-            <button class="private-chat-close" onclick="closePrivateChat()">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="private-messages" id="privateMessages"></div>
-        <div class="private-chat-input">
-            <input type="text" id="privateMessageInput" placeholder="Nhập tin nhắn riêng...">
-            <button onclick="sendPrivateMessage()">
-                <i class="fas fa-paper-plane"></i>
-            </button>
-        </div>
-    </div>
-
     <script src="/socket.io/socket.io.js"></script>
     <script src="/socket.io/socket.io.js"></script>
 <script>
@@ -897,7 +803,6 @@
     const input = document.getElementById('m');
     const userList = document.getElementById('userList');
     const typingIndicator = document.getElementById('typingIndicator');
-    const privateChats = new Map(); // Store private chat messages
 
     let typingTimeout;
 
@@ -1092,17 +997,13 @@
             const kickButton = (
                 localStorage.getItem('adminSessionToken') && 
                 userName !== username
-            ) ? `<a class="kick-btn" onclick="event.stopPropagation(); kickUser('${userName}')">x</a>`:'';
+            ) ? `<a class="kick-btn" onclick="kickUser('${userName}')">x</a>`:'';
             
             div.innerHTML = `
                 <i class="fas fa-user"></i>
                 <span>${userName}</span>
                 ${kickButton}
             `;
-            
-            // Thêm click handler cho private chat
-            div.addEventListener('click', () => startPrivateChat(userName));
-            
             userList.appendChild(div);
         });
     });
@@ -1146,123 +1047,6 @@
 
     socket.on('user stop typing', () => {
         typingIndicator.style.display = 'none';
-    });
-
-    socket.on('private message', (data) => {
-        // Store received message
-        if (!privateChats.has(data.from)) {
-            privateChats.set(data.from, []);
-        }
-        privateChats.get(data.from).push(data);
-        
-        // If chat window is not open with this user, open it
-        if (currentPrivateChat !== data.from) {
-            startPrivateChat(data.from);
-        } else {
-            // If chat is already open, just append the message
-            const privateMessages = document.getElementById('privateMessages');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message received';
-            msgDiv.innerHTML = `
-                <div class="message-bubble">
-                    <span>${data.message}</span>
-                </div>
-                <div class="message-info">
-                    ${data.from} • ${data.time}
-                </div>
-            `;
-            privateMessages.appendChild(msgDiv);
-            privateMessages.scrollTop = privateMessages.scrollHeight;
-        }
-    });
-
-    let currentPrivateChat = null;
-
-    function startPrivateChat(targetUser) {
-        if (targetUser === username) return; // Không chat với chính mình
-        currentPrivateChat = targetUser;
-        document.getElementById('privateChatTitle').textContent = `Chat với ${targetUser}`;
-        document.getElementById('privateChatModal').style.display = 'flex';
-        
-        // Load existing messages if any
-        if (!privateChats.has(targetUser)) {
-            privateChats.set(targetUser, []);
-        }
-        
-        const privateMessages = document.getElementById('privateMessages');
-        privateMessages.innerHTML = '';
-        
-        // Display stored messages
-        const messages = privateChats.get(targetUser);
-        messages.forEach(msg => {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${msg.from === username ? 'sent' : 'received'}`;
-            msgDiv.innerHTML = `
-                <div class="message-bubble">
-                    <span>${msg.message}</span>
-                </div>
-                <div class="message-info">
-                    ${msg.from === username ? 'Bạn' : msg.from} • ${msg.time}
-                </div>
-            `;
-            privateMessages.appendChild(msgDiv);
-        });
-        privateMessages.scrollTop = privateMessages.scrollHeight;
-    }
-
-    function closePrivateChat() {
-        document.getElementById('privateChatModal').style.display = 'none';
-        currentPrivateChat = null;
-    }
-
-    function sendPrivateMessage() {
-        if (!currentPrivateChat) return;
-        
-        const input = document.getElementById('privateMessageInput');
-        const message = input.value.trim();
-        
-        if (message) {
-            const time = new Date().toLocaleTimeString();
-            const messageData = {
-                from: username,
-                to: currentPrivateChat,
-                message: message,
-                time: time
-            };
-
-            // Store message in local memory
-            if (!privateChats.has(currentPrivateChat)) {
-                privateChats.set(currentPrivateChat, []);
-            }
-            privateChats.get(currentPrivateChat).push(messageData);
-
-            // Send to server
-            socket.emit('private message', messageData);
-            
-            // Display message
-            const privateMessages = document.getElementById('privateMessages');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message sent';
-            msgDiv.innerHTML = `
-                <div class="message-bubble">
-                    <span>${message}</span>
-                </div>
-                <div class="message-info">
-                    Bạn • ${time}
-                </div>
-            `;
-            privateMessages.appendChild(msgDiv);
-            privateMessages.scrollTop = privateMessages.scrollHeight;
-            
-            input.value = '';
-        }
-    }
-
-    // Thêm event listener cho input private message
-    document.getElementById('privateMessageInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            sendPrivateMessage();
-        }
     });
 
     function logout() {
