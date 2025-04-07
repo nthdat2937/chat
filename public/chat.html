@@ -897,6 +897,7 @@
     const input = document.getElementById('m');
     const userList = document.getElementById('userList');
     const typingIndicator = document.getElementById('typingIndicator');
+    const privateChats = new Map(); // Store private chat messages
 
     let typingTimeout;
 
@@ -1148,24 +1149,31 @@
     });
 
     socket.on('private message', (data) => {
-        // Nếu đang không trong chat với người gửi, mở chat mới
+        // Store received message
+        if (!privateChats.has(data.from)) {
+            privateChats.set(data.from, []);
+        }
+        privateChats.get(data.from).push(data);
+        
+        // If chat window is not open with this user, open it
         if (currentPrivateChat !== data.from) {
             startPrivateChat(data.from);
+        } else {
+            // If chat is already open, just append the message
+            const privateMessages = document.getElementById('privateMessages');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message received';
+            msgDiv.innerHTML = `
+                <div class="message-bubble">
+                    <span>${data.message}</span>
+                </div>
+                <div class="message-info">
+                    ${data.from} • ${data.time}
+                </div>
+            `;
+            privateMessages.appendChild(msgDiv);
+            privateMessages.scrollTop = privateMessages.scrollHeight;
         }
-        
-        const privateMessages = document.getElementById('privateMessages');
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'message received';
-        msgDiv.innerHTML = `
-            <div class="message-bubble">
-                <span>${data.message}</span>
-            </div>
-            <div class="message-info">
-                ${data.from} • ${new Date().toLocaleTimeString()}
-            </div>
-        `;
-        privateMessages.appendChild(msgDiv);
-        privateMessages.scrollTop = privateMessages.scrollHeight;
     });
 
     let currentPrivateChat = null;
@@ -1175,7 +1183,31 @@
         currentPrivateChat = targetUser;
         document.getElementById('privateChatTitle').textContent = `Chat với ${targetUser}`;
         document.getElementById('privateChatModal').style.display = 'flex';
-        document.getElementById('privateMessages').innerHTML = '';
+        
+        // Load existing messages if any
+        if (!privateChats.has(targetUser)) {
+            privateChats.set(targetUser, []);
+        }
+        
+        const privateMessages = document.getElementById('privateMessages');
+        privateMessages.innerHTML = '';
+        
+        // Display stored messages
+        const messages = privateChats.get(targetUser);
+        messages.forEach(msg => {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${msg.from === username ? 'sent' : 'received'}`;
+            msgDiv.innerHTML = `
+                <div class="message-bubble">
+                    <span>${msg.message}</span>
+                </div>
+                <div class="message-info">
+                    ${msg.from === username ? 'Bạn' : msg.from} • ${msg.time}
+                </div>
+            `;
+            privateMessages.appendChild(msgDiv);
+        });
+        privateMessages.scrollTop = privateMessages.scrollHeight;
     }
 
     function closePrivateChat() {
@@ -1190,12 +1222,24 @@
         const message = input.value.trim();
         
         if (message) {
-            socket.emit('private message', {
+            const time = new Date().toLocaleTimeString();
+            const messageData = {
+                from: username,
                 to: currentPrivateChat,
-                message: message
-            });
+                message: message,
+                time: time
+            };
+
+            // Store message in local memory
+            if (!privateChats.has(currentPrivateChat)) {
+                privateChats.set(currentPrivateChat, []);
+            }
+            privateChats.get(currentPrivateChat).push(messageData);
+
+            // Send to server
+            socket.emit('private message', messageData);
             
-            // Hiển thị tin nhắn đã gửi
+            // Display message
             const privateMessages = document.getElementById('privateMessages');
             const msgDiv = document.createElement('div');
             msgDiv.className = 'message sent';
@@ -1204,7 +1248,7 @@
                     <span>${message}</span>
                 </div>
                 <div class="message-info">
-                    Bạn • ${new Date().toLocaleTimeString()}
+                    Bạn • ${time}
                 </div>
             `;
             privateMessages.appendChild(msgDiv);

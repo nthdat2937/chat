@@ -7,10 +7,28 @@ const path = require('path');
 const fs = require('fs');
 const ADMIN_USERNAME = 'nthdat2937';
 
-const ADMIN_CONFIG = {
-    username: 'nthdat2937',
-    password: 'admin123' 
-};
+const ADMIN_CONFIG = [
+    {
+        username: 'nthdat2937',
+        password: 'admin123'
+    },
+    {
+        username: 'admin2',
+        password: 'admin456'
+    },
+    {
+        username: 'superadmin',
+        password: 'super123'
+    }
+];
+
+// Thêm hàm kiểm tra admin
+function isValidAdmin(username, password) {
+    return ADMIN_CONFIG.some(admin => 
+        admin.username === username && 
+        admin.password === password
+    );
+}
 
 app.use(express.static('public'));
 app.use(express.json());
@@ -65,9 +83,14 @@ app.get('/chat.html', (req, res) => {
 app.post('/verify-admin', (req, res) => {
     const { username, password } = req.body;
     
-    if (username === ADMIN_CONFIG.username && password === ADMIN_CONFIG.password) {
+    if (isValidAdmin(username, password)) {
         const sessionToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-        authenticatedAdmins.add(sessionToken);
+        // Lưu thêm thông tin username vào token
+        authenticatedAdmins.add({
+            token: sessionToken,
+            username: username,
+            createdAt: Date.now()
+        });
         
         // Set session token to expire after 24 hours
         setTimeout(() => {
@@ -141,48 +164,57 @@ io.on('connection', (socket) => {
     let adminSessionToken = null;
 
     socket.on('join chat', (data) => {
-    currentUser = data.username;
-    socket.username = data.username;
-    
-    // Enhanced admin verification
-    if (currentUser === ADMIN_USERNAME && data.sessionToken && authenticatedAdmins.has(data.sessionToken)) {
-        isAdmin = true;
-        adminSessionToken = data.sessionToken;
-        console.log(`Admin ${currentUser} authenticated successfully`);
-    } else {
-        isAdmin = false;
-        adminSessionToken = null;
-    }
+        currentUser = data.username;
+        socket.username = data.username;
+        
+        // Kiểm tra admin dựa trên mảng ADMIN_CONFIG
+        const adminData = Array.from(authenticatedAdmins).find(a => 
+            a.token === data.sessionToken && 
+            a.username === data.username
+        );
 
-    onlineUsers.set(currentUser, {
-        socketId: socket.id,
-        loginTime: data.loginTime,
-        isAdmin
+        if (adminData) {
+            isAdmin = true;
+            adminSessionToken = adminData.token;
+            console.log(`Admin ${currentUser} authenticated successfully`);
+        } else {
+            isAdmin = false;
+            adminSessionToken = null;
+        }
+
+        onlineUsers.set(currentUser, {
+            socketId: socket.id,
+            loginTime: data.loginTime,
+            isAdmin
+        });
+
+        io.emit('online users', Array.from(onlineUsers));
+        
+        socket.broadcast.emit('user joined', {
+            username: currentUser,
+            time: new Date().toISOString().replace('T', ' ').slice(0, 19)
+        });
+
+        console.log(`User ${currentUser} joined the chat${isAdmin ? ' as admin' : ''}`);
     });
-
-    io.emit('online users', Array.from(onlineUsers));
-    
-    socket.broadcast.emit('user joined', {
-        username: currentUser,
-        time: new Date().toISOString().replace('T', ' ').slice(0, 19)
-    });
-
-    console.log(`User ${currentUser} joined the chat${isAdmin ? ' as admin' : ''}`);
-});
 
     // Handle kick user event
     socket.on('kick user', (data) => {
         const { userToKick, adminToken } = data;
-
+        
         // Verify admin session token
-        if (!adminToken || !authenticatedAdmins.has(adminToken)) {
+        const adminData = Array.from(authenticatedAdmins).find(a => a.token === adminToken);
+        if (!adminData) {
             console.log('Unauthorized kick attempt by:', currentUser);
             socket.emit('kick error', { message: 'Bạn không có quyền kick người dùng!' });
             return;
         }
 
         const kickedUserData = onlineUsers.get(userToKick);
-        if (kickedUserData && userToKick !== ADMIN_USERNAME) { // Prevent admin from being kicked
+        // Không cho phép admin kick admin khác
+        const isKickedUserAdmin = ADMIN_CONFIG.some(admin => admin.username === userToKick);
+        
+        if (kickedUserData && !isKickedUserAdmin) {
             // Emit kick event to the specific user
             io.to(kickedUserData.socketId).emit('kicked', {
                 byUser: currentUser,
@@ -211,6 +243,11 @@ io.on('connection', (socket) => {
             console.log(`User ${userToKick} was kicked by admin ${currentUser}`);
         } else {
             console.log(`Failed to kick user ${userToKick} (not found or is admin)`);
+            socket.emit('kick error', { 
+                message: isKickedUserAdmin ? 
+                    'Không thể kick tài khoản admin khác!' : 
+                    'Không tìm thấy người dùng này!'
+            });
         }
     });
   
@@ -247,8 +284,9 @@ io.on('connection', (socket) => {
         if (targetSocket) {
             targetSocket.emit('private message', {
                 from: socket.username,
+                to: data.to,
                 message: data.message,
-                time: new Date().toLocaleTimeString()
+                time: data.time || new Date().toLocaleTimeString()
             });
         }
     });
@@ -301,5 +339,12 @@ process.on('SIGTERM', () => {
 
 // Clean up admin sessions periodically
 setInterval(() => {
-    authenticatedAdmins.clear();
-}, 24 * 60 * 60 * 1000); // Clear every 24 hours
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    
+    authenticatedAdmins.forEach(admin => {
+        if (now - admin.createdAt > oneDay) {
+            authenticatedAdmins.delete(admin);
+        }
+    });
+}, 60 * 60 * 1000); // Check every hour
