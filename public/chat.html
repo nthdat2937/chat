@@ -756,9 +756,16 @@
 
         .user-item span.user-name {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 4px;
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-name {
+            display: flex;
+            flex-direction: row !important;
+            align-items: center;
+            gap: 8px;
         }
     </style>
 </head>
@@ -1058,12 +1065,22 @@
                 userName !== username
             ) ? `<a class="kick-btn" onclick="kickUser('${userName}')">x</a>`:'';
             
+            // Kiểm tra vai trò của người dùng
+            let isAdmin = false;
+            if (userName === 'nthdat2937') { // Hardcode admin username
+                isAdmin = true;
+            } else {
+                isAdmin = userName === username ? 
+                    !!localStorage.getItem('adminSessionToken') : 
+                    !!(userData && userData.sessionToken);
+            }
+            
             div.innerHTML = `
                 <i class="fas fa-user"></i>
                 <span class="user-name">
                     ${userName}
-                    <span class="role-badge ${!userData.sessionToken ? 'member' : ''}">
-                        ${userData.sessionToken ? 'Admin' : 'Member'}
+                    <span class="role-badge ${!isAdmin ? 'member' : ''}">
+                        ${isAdmin ? 'Admin' : 'Member'}
                     </span>
                 </span>
                 ${kickButton}
