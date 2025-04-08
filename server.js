@@ -22,8 +22,19 @@ const ADMIN_CONFIG = [
     }
 ];
 
+const BOT_CONFIG = {
+    username: 'Bot',
+    password: 'bottest'
+};
+
+// Thêm hàm kiểm tra bot
+function isBot(username, password) {
+    return username === BOT_CONFIG.username && password === BOT_CONFIG.password;
+}
+
 // Thêm hàm kiểm tra admin
 function isValidAdmin(username, password) {
+    if (isBot(username, password)) return false;
     return ADMIN_CONFIG.some(admin => 
         admin.username === username && 
         admin.password === password
@@ -174,31 +185,53 @@ app.post('/upload', async (req, res) => {
 io.on('connection', (socket) => {
     let currentUser = null;
     let isAdmin = false;
+    let isBot = false;
     let adminSessionToken = null;
 
     socket.on('join chat', (data) => {
         currentUser = data.username;
         socket.username = data.username;
         
-        // Kiểm tra admin dựa trên mảng ADMIN_CONFIG
-        const adminData = Array.from(authenticatedAdmins).find(a => 
-            a.token === data.sessionToken && 
-            a.username === data.username
-        );
-
-        if (adminData) {
-            isAdmin = true;
-            adminSessionToken = adminData.token;
-            console.log(`Admin ${currentUser} authenticated successfully`);
-        } else {
+        // Kiểm tra bot và admin
+        if (currentUser === BOT_CONFIG.username && data.password === BOT_CONFIG.password) {
             isAdmin = false;
-            adminSessionToken = null;
+            isBot = true;
+            console.log(`Bot ${currentUser} connected`);
+        } else if (currentUser === BOT_CONFIG.username) {
+            // Nếu là Bot nhưng sai mật khẩu
+            socket.emit('auth error', { message: 'Invalid Bot credentials' });
+            socket.disconnect(true);
+            return;
+        } else {
+            const adminData = Array.from(authenticatedAdmins).find(a => 
+                a.token === data.sessionToken && 
+                a.username === data.username
+            );
+
+            if (adminData) {
+                isAdmin = true;
+                isBot = false;
+                adminSessionToken = adminData.token;
+                console.log(`Admin ${currentUser} authenticated successfully`);
+            } else {
+                isAdmin = false;
+                isBot = false;
+                adminSessionToken = null;
+            }
+        }
+
+        // Prevent using Bot username without proper authentication
+        if (currentUser === BOT_CONFIG.username && !isBot) {
+            socket.emit('auth error', { message: 'Cannot use Bot username without authentication' });
+            socket.disconnect(true);
+            return;
         }
 
         onlineUsers.set(currentUser, {
             socketId: socket.id,
             loginTime: data.loginTime,
-            isAdmin
+            isAdmin,
+            isBot: currentUser === BOT_CONFIG.username
         });
 
         io.emit('online users', Array.from(onlineUsers));
@@ -215,9 +248,9 @@ io.on('connection', (socket) => {
     socket.on('kick user', (data) => {
         const { userToKick, adminToken, reason } = data;
         
-        // Verify admin session token
+        // Verify admin session token and not bot
         const adminData = Array.from(authenticatedAdmins).find(a => a.token === adminToken);
-        if (!adminData) {
+        if (!adminData || onlineUsers.get(currentUser)?.isBot) {
             console.log('Unauthorized kick attempt by:', currentUser);
             socket.emit('kick error', { message: 'Bạn không có quyền kick người dùng!' });
             return;

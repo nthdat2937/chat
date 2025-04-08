@@ -849,6 +849,13 @@
             backdrop-filter: blur(10px);
             order: 2;
         }
+
+        .role-badge.bot {
+            background: linear-gradient(135deg, #00ff00, #008000);
+            box-shadow: 0 2px 4px rgba(0, 255, 0, 0.2);
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 <body>
@@ -955,6 +962,23 @@
     setInterval(updateTime, 1000);
 
     const socket = io();
+
+    socket.emit('join chat', {
+        username,
+        loginTime,
+        sessionToken: adminSessionToken,
+        password: username === 'Bot' ? prompt('Enter Bot password:') : null
+    });
+
+    // Add auth error handler
+    socket.on('auth error', (data) => {
+        alert(data.message);
+        localStorage.removeItem('chatUsername');
+        localStorage.removeItem('loginTime');
+        localStorage.removeItem('adminSessionToken');
+        window.location.href = '/';
+    });
+
     const messages = document.getElementById('messages');
     const form = document.getElementById('form');
     const input = document.getElementById('m');
@@ -963,12 +987,6 @@
     const privateChats = new Map(); // Store private chat messages
 
     let typingTimeout;
-
-    socket.emit('join chat', {
-        username,
-        loginTime,
-        sessionToken: adminSessionToken
-    });
 
     function sanitizeFilename(filename) {
         return filename.replace(/[/\\?%*:|"<>]/g, '-');
@@ -1176,18 +1194,20 @@
             
             const kickButton = (
                 localStorage.getItem('adminSessionToken') && 
-                userName !== username
+                userName !== username && 
+                !userData.isBot
             ) ? `<a class="kick-btn" onclick="event.stopPropagation(); kickUser('${userName}')">x</a>`:'';
             
             // Kiểm tra vai trò
             const isAdmin = userName === 'nthdat2937' || userData.sessionToken;
+            const isBot = userData.isBot;
             
             div.innerHTML = `
                 <i class="fas fa-user"></i>
                 <span class="user-name">
                     ${userName}
-                    <span class="role-badge ${!isAdmin ? 'member' : ''}">
-                        ${isAdmin ? 'Admin' : 'Member'}
+                    <span class="role-badge ${isBot ? 'bot' : !isAdmin ? 'member' : ''}">
+                        ${isBot ? 'Bot' : isAdmin ? 'Admin' : 'Member'}
                     </span>
                 </span>
                 ${kickButton}

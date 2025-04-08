@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | TD Web</title>
+    <title>Đăng nhập | TD Web</title>
     <link
       rel="icon"
       href="https://cdn.glitch.global/f61a2915-cde6-4e38-b016-504cda6e4656/2025_03_26_04h_Kleki-removebg-preview.png?v=1742993178317"
@@ -181,19 +181,19 @@
     <div class="login-container">
         <h1>
             <i class="fas fa-comments"></i>
-            Chat Login
+            Đăng nhập
         </h1>
         <form id="loginForm" onsubmit="return handleLogin(event)">
             <div class="input-group">
                 <label for="username">Tên người dùng</label>
                 <input type="text" id="username" required 
                        placeholder="Tên người dùng"
-                       maxlength="10">
+                       maxlength="60">
             </div>
             <div id="passwordGroup" class="password-group">
                 <label for="password">Mật khẩu</label>
                 <input type="password" id="password" 
-                       placeholder="Mật khẩu (chỉ dành cho quản trị viên)">
+                       placeholder="Mật khẩu (for admin and bot only )">
                 <div class="admin-notice">
                     <i class="fas fa-shield-alt"></i>
                     Yêu cầu xác thực quản trị viên
@@ -223,6 +223,7 @@
 
     <script>
         const ADMIN_USERNAME = 'nthdat2937';
+        const BOT_USERNAME = 'Bot';
         const usernameInput = document.getElementById('username');
         const passwordGroup = document.getElementById('passwordGroup');
         const passwordInput = document.getElementById('password');
@@ -239,9 +240,13 @@
 
         usernameInput.addEventListener('input', function() {
             const isAdmin = this.value.trim() === ADMIN_USERNAME;
-            passwordGroup.classList.toggle('visible', isAdmin);
-            adminNotice.classList.toggle('visible', isAdmin);
-            passwordInput.required = isAdmin;
+            const isBot = this.value.trim() === BOT_USERNAME;
+            passwordGroup.classList.toggle('visible', isAdmin || isBot);
+            adminNotice.classList.toggle('visible', isAdmin || isBot);
+            adminNotice.innerHTML = isBot ? 
+                '<i class="fas fa-robot"></i>Yêu cầu xác thực Bot' : 
+                '<i class="fas fa-shield-alt"></i>Yêu cầu xác thực quản trị viên';
+            passwordInput.required = isAdmin || isBot;
         });
 
         async function handleLogin(event) {
@@ -278,6 +283,16 @@
                     }
                 } catch (error) {
                     showError('Error during admin verification');
+                }
+            } else if (username === BOT_USERNAME) {
+                // Xử lý đăng nhập cho Bot
+                if (password === 'bottest') {
+                    localStorage.setItem('chatUsername', username);
+                    localStorage.setItem('loginTime', document.getElementById('currentTime').textContent);
+                    localStorage.setItem('botPassword', password);
+                    window.location.href = '/chat.html';
+                } else {
+                    showError('Mật khẩu Bot không hợp lệ!');
                 }
             } else {
                 localStorage.setItem('chatUsername', username);
