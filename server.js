@@ -102,6 +102,22 @@ app.get('/chat.html', (req, res) => {
 app.post('/verify-admin', (req, res) => {
     const { username, password } = req.body;
     
+    // Thêm xử lý cho Bot
+    if (username === BOT_CONFIG.username) {
+        if (password === BOT_CONFIG.password) {
+            res.json({ 
+                status: 'success', 
+                isBot: true
+            });
+        } else {
+            res.status(401).json({
+                status: 'error',
+                message: 'Invalid Bot credentials'
+            });
+        }
+        return;
+    }
+    
     if (isValidAdmin(username, password)) {
         const sessionToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
         // Lưu thêm thông tin username vào token
@@ -193,15 +209,11 @@ io.on('connection', (socket) => {
         socket.username = data.username;
         
         // Kiểm tra bot và admin
-        if (currentUser === BOT_CONFIG.username && data.password === BOT_CONFIG.password) {
+        if (currentUser === BOT_CONFIG.username) {
+            // Bot không cần xác thực lại vì đã xác thực ở bước đăng nhập
             isAdmin = false;
             isBot = true;
             console.log(`Bot ${currentUser} connected`);
-        } else if (currentUser === BOT_CONFIG.username) {
-            // Nếu là Bot nhưng sai mật khẩu
-            socket.emit('auth error', { message: 'Invalid Bot credentials' });
-            socket.disconnect(true);
-            return;
         } else {
             const adminData = Array.from(authenticatedAdmins).find(a => 
                 a.token === data.sessionToken && 
@@ -218,13 +230,6 @@ io.on('connection', (socket) => {
                 isBot = false;
                 adminSessionToken = null;
             }
-        }
-
-        // Prevent using Bot username without proper authentication
-        if (currentUser === BOT_CONFIG.username && !isBot) {
-            socket.emit('auth error', { message: 'Cannot use Bot username without authentication' });
-            socket.disconnect(true);
-            return;
         }
 
         onlineUsers.set(currentUser, {

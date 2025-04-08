@@ -966,8 +966,7 @@
     socket.emit('join chat', {
         username,
         loginTime,
-        sessionToken: adminSessionToken,
-        password: username === 'Bot' ? prompt('Enter Bot password:') : null
+        sessionToken: adminSessionToken
     });
 
     // Add auth error handler
