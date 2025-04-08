@@ -1009,22 +1009,42 @@
     }
 
     function kickUser(userToKick) {
-        const adminToken = localStorage.getItem('adminSessionToken');
+        const adminToken = localStorage.getItem('adminSessionToken'); 
         if (!adminToken) {
             alert('Bạn không có quyền kick người dùng!');
             return;
         }
 
-        if (confirm(`Bạn có chắc muốn kick người dùng ${userToKick}?`)) {
+        const reason = prompt(`Nhập lý do kick người dùng ${userToKick}:`);
+        if (reason !== null) { // Chỉ kick khi người dùng không bấm Cancel
             socket.emit('kick user', {
                 userToKick,
-                adminToken
+                adminToken,
+                reason: reason.trim() || 'Không có lý do'
             });
         }
     }
 
     socket.on('kick error', (data) => {
         alert(data.message);
+    });
+
+    socket.on('user kicked', (data) => {
+        const div = document.createElement('div');
+        div.className = 'system-message kick-notification';
+        const reasonText = data.reason ? ` • Lý do: ${data.reason}` : ' • Không có lý do';
+        div.textContent = `'${data.username}' đã bị kick bởi ${data.byUser} • ${data.time}${reasonText}`;
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    });
+
+    socket.on('kicked', (data) => {
+        const reasonText = data.reason ? `\nLý do: ${data.reason}` : '\nKhông có lý do';
+        alert(`Bạn đã bị kick khỏi phòng chat!${reasonText}`);
+        localStorage.removeItem('chatUsername');
+        localStorage.removeItem('loginTime');
+        localStorage.removeItem('adminSessionToken');
+        window.location.href = '/';
     });
 
     async function handleFileUpload(event) {
@@ -1175,8 +1195,9 @@
         });
     });
 
-    socket.on('kicked', () => {
-        alert('Bạn đã bị kick khỏi phòng chat!');
+    socket.on('kicked', (data) => {
+        const reasonText = data.reason ? `\nLý do: ${data.reason}` : '\nKhông có lý do';
+        alert(`Bạn đã bị kick khỏi phòng chat!${reasonText}`);
         localStorage.removeItem('chatUsername');
         localStorage.removeItem('loginTime');
         localStorage.removeItem('adminSessionToken');
@@ -1186,7 +1207,8 @@
     socket.on('user kicked', (data) => {
         const div = document.createElement('div');
         div.className = 'system-message kick-notification';
-        div.textContent = `'${data.username}' đã bị kick bởi ${data.byUser} • ${data.time}`;
+        const reasonText = data.reason ? ` • Lý do: ${data.reason}` : ' • Không có lý do';
+        div.textContent = `'${data.username}' đã bị kick bởi ${data.byUser} • ${data.time}${reasonText}`;
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     });
