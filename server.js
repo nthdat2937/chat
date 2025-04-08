@@ -30,6 +30,14 @@ function isValidAdmin(username, password) {
     );
 }
 
+// Thêm hàm formatTime sau khi khai báo các const
+function formatTimeUTC7(date) {
+    return new Date(date.getTime() + 7 * 60 * 60 * 1000)
+        .toISOString()
+        .replace('T', ' ')
+        .slice(0, 19);
+}
+
 app.use(express.static('public'));
 app.use(express.json());
 app.use(fileUpload({
@@ -192,7 +200,7 @@ io.on('connection', (socket) => {
         
         socket.broadcast.emit('user joined', {
             username: currentUser,
-            time: new Date().toISOString().replace('T', ' ').slice(0, 19)
+            time: formatTimeUTC7(new Date())
         });
 
         console.log(`User ${currentUser} joined the chat${isAdmin ? ' as admin' : ''}`);
@@ -216,7 +224,7 @@ io.on('connection', (socket) => {
         if (kickedUserData && !isKickedUserAdmin) {
             const kickData = {
                 byUser: currentUser,
-                time: new Date().toISOString().replace('T', ' ').slice(0, 19),
+                time: formatTimeUTC7(new Date()),
                 reason: reason // Pass the reason directly
             };
 
@@ -227,7 +235,7 @@ io.on('connection', (socket) => {
             io.emit('user kicked', {
                 username: userToKick,
                 byUser: currentUser,
-                time: new Date().toISOString().replace('T', ' ').slice(0, 19),
+                time: formatTimeUTC7(new Date()),
                 reason: reason // Pass the reason directly
             });
 
@@ -260,7 +268,7 @@ io.on('connection', (socket) => {
         io.emit('chat message', {
             username: currentUser,
             text: msg,
-            time: new Date().toISOString().replace('T', ' ').slice(0, 19)
+            time: formatTimeUTC7(new Date())
         });
     });
 
@@ -268,7 +276,7 @@ io.on('connection', (socket) => {
         io.emit('file message', {
             username: currentUser,
             file: fileData,
-            time: new Date().toISOString().replace('T', ' ').slice(0, 19)
+            time: formatTimeUTC7(new Date())
         });
     });
 
@@ -303,7 +311,7 @@ io.on('connection', (socket) => {
             io.emit('online users', Array.from(onlineUsers));
             io.emit('user left', {
                 username: currentUser,
-                time: new Date().toISOString().replace('T', ' ').slice(0, 19)
+                time: formatTimeUTC7(new Date())
             });
         }
     });
@@ -329,7 +337,7 @@ io.use((socket, next) => {
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log('Current time (UTC):', new Date().toISOString().replace('T', ' ').slice(0, 19));
+    console.log('Current time (Hanoi):', formatTimeUTC7(new Date()));
 });
 
 // Graceful shutdown

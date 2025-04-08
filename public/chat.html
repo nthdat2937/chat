@@ -947,7 +947,8 @@
 
     function updateTime() {
         const now = new Date();
-        const formatted = now.toISOString().replace('T', ' ').slice(0, 19);
+        const utc7Time = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+        const formatted = utc7Time.toISOString().replace('T', ' ').slice(0, 19);
         document.getElementById('currentTime').textContent = formatted;
     }
     updateTime();
@@ -1197,24 +1198,6 @@
         });
     });
 
-    socket.on('kicked', (data) => {
-        const reasonText = data.reason ? `\nLý do: ${data.reason}` : '\nKhông có lý do';
-        alert(`Bạn đã bị kick khỏi phòng chat!${reasonText}`);
-        localStorage.removeItem('chatUsername');
-        localStorage.removeItem('loginTime');
-        localStorage.removeItem('adminSessionToken');
-        window.location.href = '/';
-    });
-
-    socket.on('user kicked', (data) => {
-        const div = document.createElement('div');
-        div.className = 'system-message kick-notification';
-        const reasonText = data.reason ? ` • Lý do: ${data.reason}` : ' • Không có lý do';
-        div.textContent = `'${data.username}' đã bị kick bởi ${data.byUser} • ${data.time}${reasonText}`;
-        messages.appendChild(div);
-        messages.scrollTop = messages.scrollHeight;
-    });
-
     socket.on('user joined', (data) => {
         const div = document.createElement('div');
         div.className = 'system-message';
@@ -1314,7 +1297,10 @@
         const message = input.value.trim();
         
         if (message) {
-            const time = new Date().toLocaleTimeString();
+            const now = new Date();
+            const utc7Time = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+            const time = utc7Time.toLocaleTimeString('vi-VN');
+            
             const messageData = {
                 from: username,
                 to: currentPrivateChat,
