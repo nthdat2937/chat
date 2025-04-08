@@ -185,10 +185,10 @@
         </h1>
         <form id="loginForm" onsubmit="return handleLogin(event)">
             <div class="input-group">
-                <label for="username">Tên người dùng</label>
+                <label for="username">Tên người dùng (3~12 kí tự)</label>
                 <input type="text" id="username" required 
                        placeholder="Tên người dùng"
-                       maxlength="60">
+                       maxlength="10" minlength="3">
             </div>
             <div id="passwordGroup" class="password-group">
                 <label for="password">Mật khẩu</label>
