@@ -1016,12 +1016,13 @@
         }
 
         const reason = prompt(`Nhập lý do kick người dùng ${userToKick}:`);
-        if (reason !== null) { // Chỉ kick khi người dùng không bấm Cancel
-            socket.emit('kick user', {
+        if (reason !== null) { // Only proceed if user didn't click Cancel
+            const kickData = {
                 userToKick,
                 adminToken,
-                reason: reason.trim() || 'Không có lý do'
-            });
+                reason: reason.trim() // Send the exact reason, don't set default
+            };
+            socket.emit('kick user', kickData);
         }
     }
 
@@ -1032,14 +1033,15 @@
     socket.on('user kicked', (data) => {
         const div = document.createElement('div');
         div.className = 'system-message kick-notification';
-        const reasonText = data.reason ? ` • Lý do: ${data.reason}` : ' • Không có lý do';
+        // Only add the reason text if there actually is a reason
+        const reasonText = data.reason ? ` • Lý do: ${data.reason}` : '';
         div.textContent = `'${data.username}' đã bị kick bởi ${data.byUser} • ${data.time}${reasonText}`;
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     });
 
     socket.on('kicked', (data) => {
-        const reasonText = data.reason ? `\nLý do: ${data.reason}` : '\nKhông có lý do';
+        const reasonText = data.reason ? `\nLý do: ${data.reason}` : '';
         alert(`Bạn đã bị kick khỏi phòng chat!${reasonText}`);
         localStorage.removeItem('chatUsername');
         localStorage.removeItem('loginTime');

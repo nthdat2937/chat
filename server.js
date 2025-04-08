@@ -200,7 +200,7 @@ io.on('connection', (socket) => {
 
     // Handle kick user event
     socket.on('kick user', (data) => {
-        const { userToKick, adminToken } = data;
+        const { userToKick, adminToken, reason } = data;
         
         // Verify admin session token
         const adminData = Array.from(authenticatedAdmins).find(a => a.token === adminToken);
@@ -211,21 +211,24 @@ io.on('connection', (socket) => {
         }
 
         const kickedUserData = onlineUsers.get(userToKick);
-        // Không cho phép admin kick admin khác
         const isKickedUserAdmin = ADMIN_CONFIG.some(admin => admin.username === userToKick);
         
         if (kickedUserData && !isKickedUserAdmin) {
-            // Emit kick event to the specific user
-            io.to(kickedUserData.socketId).emit('kicked', {
+            const kickData = {
                 byUser: currentUser,
-                time: new Date().toISOString().replace('T', ' ').slice(0, 19)
-            });
+                time: new Date().toISOString().replace('T', ' ').slice(0, 19),
+                reason: reason // Pass the reason directly
+            };
+
+            // Emit kick event to the specific user
+            io.to(kickedUserData.socketId).emit('kicked', kickData);
 
             // Broadcast kick notification to all users
             io.emit('user kicked', {
                 username: userToKick,
                 byUser: currentUser,
-                time: new Date().toISOString().replace('T', ' ').slice(0, 19)
+                time: new Date().toISOString().replace('T', ' ').slice(0, 19),
+                reason: reason // Pass the reason directly
             });
 
             // Remove user from online users
@@ -240,7 +243,7 @@ io.on('connection', (socket) => {
             // Update online users list for everyone
             io.emit('online users', Array.from(onlineUsers));
             
-            console.log(`User ${userToKick} was kicked by admin ${currentUser}`);
+            console.log(`User ${userToKick} was kicked by admin ${currentUser}. Reason: ${reason || 'No reason provided'}`);
         } else {
             console.log(`Failed to kick user ${userToKick} (not found or is admin)`);
             socket.emit('kick error', { 
