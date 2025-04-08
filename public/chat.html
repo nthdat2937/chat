@@ -1085,7 +1085,7 @@
                     socket.emit('file message', fileMessage);
                 }
             } catch (error) {
-                console.error('Error uploading file:', error);
+                console.error('Lỗi tải lên tập tin:', error);
             }
         }
 
@@ -1210,7 +1210,7 @@
     socket.on('user joined', (data) => {
         const div = document.createElement('div');
         div.className = 'system-message';
-        div.textContent = `'${data.username}' đã gia nhập • ${data.time}`;
+        div.textContent = `'${data.username}' đã gia nhập lúc ${data.time}`;
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     });
@@ -1218,13 +1218,13 @@
     socket.on('user left', (data) => {
         const div = document.createElement('div');
         div.className = 'system-message';
-        div.textContent = `'${data.username}' đã rời đi • ${data.time}`;
+        div.textContent = `'${data.username}' đã rời đi lúc ${data.time}`;
         messages.appendChild(div);
         messages.scrollTop = messages.scrollHeight;
     });
 
     socket.on('user typing', (data) => {
-        typingIndicator.textContent = `${data.username} is typing...`;
+        typingIndicator.textContent = `${data.username} đang soạn tin...`;
         typingIndicator.style.display = 'block';
     });
 

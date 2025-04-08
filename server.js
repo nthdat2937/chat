@@ -198,7 +198,7 @@ io.on('connection', (socket) => {
         if (currentUser === BOT_CONFIG.username) {
             isAdmin = false;
             isBot = true;
-            console.log(`Bot ${currentUser} connected`);
+            console.log(`Trợ lý ${currentUser} đã kết nối`);
         } else {
             const adminData = Array.from(authenticatedAdmins).find(a => 
                 a.token === data.sessionToken && 
@@ -274,7 +274,7 @@ io.on('connection', (socket) => {
             
             console.log(`Người dùng ${userToKick} đã bị kick bởi admin ${currentUser}. Reason: ${reason || 'No reason provided'}`);
         } else {
-            console.log(`Không thể kick người dùng ${userToKick} (Ban)`);
+            console.log(`Không thể kick người dùng ${userToKick} (bạn không phải admin)`);
             socket.emit('kick error', { 
                 message: isKickedUserAdmin ? 
                     'Không thể kick tài khoản admin khác!' : 
