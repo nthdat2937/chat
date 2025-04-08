@@ -50,8 +50,8 @@ app.use(fileUpload({
     useTempFiles: true,
     tempFileDir: '/tmp/',
     debug: false,
-    safeFileNames: true,
-    preserveExtension: true
+    safeFileNames: false, // Thay đổi thành false
+    preserveExtension: 4  // Cho phép tối đa 4 ký tự cho extension
 }));
 
 const uploadDir = path.join(__dirname, 'public', 'uploads');
@@ -128,13 +128,18 @@ app.post('/upload', async (req, res) => {
         const now = new Date();
         const timestamp = now.getTime();
         
-        const fileExt = path.extname(file.name);
-        const safeName = `${timestamp}-${path.basename(file.name, fileExt)}${fileExt}`;
+        // Xử lý tên file một cách an toàn hơn
+        const originalExt = path.extname(file.name);
+        const cleanExt = originalExt.toLowerCase();
+        const safeName = `${timestamp}${cleanExt}`;
         
         const allowedTypes = [
             'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-            'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/pdf', 
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel', 
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'text/plain', 'application/zip', 'application/x-rar-compressed',
             'audio/mpeg', 'video/mp4'
         ];
@@ -153,7 +158,7 @@ app.post('/upload', async (req, res) => {
             status: 'success',
             path: '/uploads/' + safeName,
             filename: file.name,
-            uploadTime: now.toISOString().replace('T', ' ').slice(0, 19)
+            uploadTime: formatTimeUTC7(new Date())
         });
 
     } catch (err) {
