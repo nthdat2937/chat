@@ -237,14 +237,7 @@ io.on('connection', (socket) => {
     socket.on('kick user', (data) => {
         const { userToKick, adminToken, reason } = data;
         
-        // Cải thiện kiểm tra admin token 
-        let adminData = null;
-        authenticatedAdmins.forEach(admin => {
-            if (admin.token === adminToken) {
-                adminData = admin;
-            }
-        });
-
+        const adminData = Array.from(authenticatedAdmins).find(a => a.token === adminToken);
         if (!adminData || onlineUsers.get(currentUser)?.isBot) {
             console.log('Unauthorized kick attempt by:', currentUser);
             socket.emit('kick error', { message: 'Bạn không có quyền kick người dùng!' });
@@ -261,8 +254,8 @@ io.on('connection', (socket) => {
                 reason: reason
             };
 
-            // Emit kick events
             io.to(kickedUserData.socketId).emit('kicked', kickData);
+
             io.emit('user kicked', {
                 username: userToKick,
                 byUser: currentUser,
@@ -270,8 +263,8 @@ io.on('connection', (socket) => {
                 reason: reason
             });
 
-            // Remove user and disconnect
             onlineUsers.delete(userToKick);
+
             const kickedSocket = io.sockets.sockets.get(kickedUserData.socketId);
             if (kickedSocket) {
                 kickedSocket.disconnect(true);
@@ -279,8 +272,9 @@ io.on('connection', (socket) => {
 
             io.emit('online users', Array.from(onlineUsers));
             
-            console.log(`User ${userToKick} was kicked by admin ${currentUser}. Reason: ${reason || 'No reason provided'}`);
+            console.log(`Người dùng ${userToKick} đã bị kick bởi admin ${currentUser}. Reason: ${reason || 'No reason provided'}`);
         } else {
+            console.log(`Không thể kick người dùng ${userToKick} (bạn không phải admin)`);
             socket.emit('kick error', { 
                 message: isKickedUserAdmin ? 
                     'Không thể kick tài khoản admin khác!' : 

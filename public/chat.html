@@ -1182,21 +1182,22 @@
             const div = document.createElement('div');
             div.className = 'user-item';
             
-            const kickButton = (
-                localStorage.getItem('adminSessionToken') && 
-                userName !== username && 
-                !userData.isBot
-            ) ? `<a class="kick-btn" onclick="event.stopPropagation(); kickUser('${userName}')">x</a>`:'';
+            // Chỉ hiện nút kick nếu là admin và không phải kicking bot hoặc admin khác
+            const isAdmin = username === 'nthdat2937' || localStorage.getItem('adminSessionToken');
+            const kickButton = (isAdmin && userName !== username && !userData.isBot && userName !== 'nthdat2937') 
+                ? `<a class="kick-btn" onclick="event.stopPropagation(); kickUser('${userName}')">x</a>`
+                : '';
             
-            const isAdmin = userName === 'nthdat2937' || userData.sessionToken;
+            // Xác định role user
+            const userIsAdmin = userName === 'nthdat2937' || userData.sessionToken;
             const isBot = userData.isBot;
             
             div.innerHTML = `
                 <i class="fas fa-user"></i>
                 <span class="user-name">
                     ${userName}
-                    <span class="role-badge ${isBot ? 'bot' : !isAdmin ? 'member' : ''}">
-                        ${isBot ? 'Bot' : isAdmin ? 'Admin' : 'Member'}
+                    <span class="role-badge ${isBot ? 'bot' : !userIsAdmin ? 'member' : ''}">
+                        ${isBot ? 'Bot' : userIsAdmin ? 'Admin' : 'Member'}
                     </span>
                 </span>
                 ${kickButton}
