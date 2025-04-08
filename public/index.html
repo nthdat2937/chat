@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng nhập | TD Web</title>
+    <title>Login | TD Web</title>
     <link
       rel="icon"
       href="https://cdn.glitch.global/f61a2915-cde6-4e38-b016-504cda6e4656/2025_03_26_04h_Kleki-removebg-preview.png?v=1742993178317"
@@ -149,7 +149,6 @@
             margin-right: 5px;
         }
       
-        /* Thêm style cho phần password */
         .password-group {
             display: none;
             margin-bottom: 20px;
@@ -181,19 +180,19 @@
     <div class="login-container">
         <h1>
             <i class="fas fa-comments"></i>
-            Đăng nhập
+            Chat Login
         </h1>
         <form id="loginForm" onsubmit="return handleLogin(event)">
             <div class="input-group">
-                <label for="username">Tên người dùng (3~10 kí tự)</label>
+                <label for="username">Tên người dùng</label>
                 <input type="text" id="username" required 
                        placeholder="Tên người dùng"
-                       maxlength="10" minlength="3">
+                       maxlength="60">
             </div>
             <div id="passwordGroup" class="password-group">
                 <label for="password">Mật khẩu</label>
                 <input type="password" id="password" 
-                       placeholder="Mật khẩu">
+                       placeholder="Mật khẩu (chỉ dành cho quản trị viên)">
                 <div class="admin-notice">
                     <i class="fas fa-shield-alt"></i>
                     Yêu cầu xác thực quản trị viên
@@ -285,7 +284,6 @@
                     showError('Error during admin verification');
                 }
             } else if (username === BOT_USERNAME) {
-                // Xử lý đăng nhập cho Bot
                 if (password === 'bottest') {
                     localStorage.setItem('chatUsername', username);
                     localStorage.setItem('loginTime', document.getElementById('currentTime').textContent);
@@ -307,11 +305,10 @@
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
             errorMessage.style.animation = 'none';
-            errorMessage.offsetHeight; // Trigger reflow
+            errorMessage.offsetHeight;
             errorMessage.style.animation = 'fadeIn 0.3s ease';
         }
 
-        // Check if user is already logged in
         if (localStorage.getItem('chatUsername')) {
             window.location.href = '/chat.html';
         }

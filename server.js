@@ -27,12 +27,10 @@ const BOT_CONFIG = {
     password: 'bottest'
 };
 
-// Thêm hàm kiểm tra bot
 function isBot(username, password) {
     return username === BOT_CONFIG.username && password === BOT_CONFIG.password;
 }
 
-// Thêm hàm kiểm tra admin
 function isValidAdmin(username, password) {
     if (isBot(username, password)) return false;
     return ADMIN_CONFIG.some(admin => 
@@ -41,7 +39,6 @@ function isValidAdmin(username, password) {
     );
 }
 
-// Thêm hàm formatTime sau khi khai báo các const
 function formatTimeUTC7(date) {
     return new Date(date.getTime() + 7 * 60 * 60 * 1000)
         .toISOString()
@@ -61,8 +58,8 @@ app.use(fileUpload({
     useTempFiles: true,
     tempFileDir: '/tmp/',
     debug: false,
-    safeFileNames: false, // Thay đổi thành false
-    preserveExtension: 4  // Cho phép tối đa 4 ký tự cho extension
+    safeFileNames: false,
+    preserveExtension: 4
 }));
 
 const uploadDir = path.join(__dirname, 'public', 'uploads');
@@ -70,7 +67,6 @@ if (!fs.existsSync(uploadDir)){
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Clean up temporary files periodically (every 24 hours)
 setInterval(() => {
     const files = fs.readdirSync(uploadDir);
     const now = Date.now();
@@ -85,11 +81,9 @@ setInterval(() => {
     });
 }, 24 * 60 * 60 * 1000);
 
-// Store online users and authenticated admin sessions
 const onlineUsers = new Map();
 const authenticatedAdmins = new Set();
 
-// Routes
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
 });
@@ -98,11 +92,9 @@ app.get('/chat.html', (req, res) => {
     res.sendFile(__dirname + '/public/chat.html');
 });
 
-// Admin verification endpoint
 app.post('/verify-admin', (req, res) => {
     const { username, password } = req.body;
     
-    // Thêm xử lý cho Bot
     if (username === BOT_CONFIG.username) {
         if (password === BOT_CONFIG.password) {
             res.json({ 
@@ -120,14 +112,12 @@ app.post('/verify-admin', (req, res) => {
     
     if (isValidAdmin(username, password)) {
         const sessionToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-        // Lưu thêm thông tin username vào token
         authenticatedAdmins.add({
             token: sessionToken,
             username: username,
             createdAt: Date.now()
         });
         
-        // Set session token to expire after 24 hours
         setTimeout(() => {
             authenticatedAdmins.delete(sessionToken);
         }, 24 * 60 * 60 * 1000);
@@ -141,7 +131,6 @@ app.post('/verify-admin', (req, res) => {
     }
 });
 
-// File upload handler
 app.post('/upload', async (req, res) => {
     try {
         if (!req.files || !req.files.file) {
@@ -155,7 +144,6 @@ app.post('/upload', async (req, res) => {
         const now = new Date();
         const timestamp = now.getTime();
         
-        // Xử lý tên file một cách an toàn hơn
         const originalExt = path.extname(file.name);
         const cleanExt = originalExt.toLowerCase();
         const safeName = `${timestamp}${cleanExt}`;
@@ -197,7 +185,6 @@ app.post('/upload', async (req, res) => {
     }
 });
 
-// Socket.IO event handlers
 io.on('connection', (socket) => {
     let currentUser = null;
     let isAdmin = false;
@@ -208,9 +195,7 @@ io.on('connection', (socket) => {
         currentUser = data.username;
         socket.username = data.username;
         
-        // Kiểm tra bot và admin
         if (currentUser === BOT_CONFIG.username) {
-            // Bot không cần xác thực lại vì đã xác thực ở bước đăng nhập
             isAdmin = false;
             isBot = true;
             console.log(`Bot ${currentUser} connected`);
@@ -224,7 +209,7 @@ io.on('connection', (socket) => {
                 isAdmin = true;
                 isBot = false;
                 adminSessionToken = adminData.token;
-                console.log(`Admin ${currentUser} authenticated successfully`);
+                console.log(`Admin ${currentUser} đã xác thực thành công`);
             } else {
                 isAdmin = false;
                 isBot = false;
@@ -246,14 +231,12 @@ io.on('connection', (socket) => {
             time: formatTimeUTC7(new Date())
         });
 
-        console.log(`User ${currentUser} joined the chat${isAdmin ? ' as admin' : ''}`);
+        console.log(`Người dùng ${currentUser} tham gia cuộc trò chuyện${isAdmin ? ' với vai trò Admin' : ''}`);
     });
 
-    // Handle kick user event
     socket.on('kick user', (data) => {
         const { userToKick, adminToken, reason } = data;
         
-        // Verify admin session token and not bot
         const adminData = Array.from(authenticatedAdmins).find(a => a.token === adminToken);
         if (!adminData || onlineUsers.get(currentUser)?.isBot) {
             console.log('Unauthorized kick attempt by:', currentUser);
@@ -268,35 +251,30 @@ io.on('connection', (socket) => {
             const kickData = {
                 byUser: currentUser,
                 time: formatTimeUTC7(new Date()),
-                reason: reason // Pass the reason directly
+                reason: reason
             };
 
-            // Emit kick event to the specific user
             io.to(kickedUserData.socketId).emit('kicked', kickData);
 
-            // Broadcast kick notification to all users
             io.emit('user kicked', {
                 username: userToKick,
                 byUser: currentUser,
                 time: formatTimeUTC7(new Date()),
-                reason: reason // Pass the reason directly
+                reason: reason
             });
 
-            // Remove user from online users
             onlineUsers.delete(userToKick);
 
-            // Force disconnect the kicked user
             const kickedSocket = io.sockets.sockets.get(kickedUserData.socketId);
             if (kickedSocket) {
                 kickedSocket.disconnect(true);
             }
 
-            // Update online users list for everyone
             io.emit('online users', Array.from(onlineUsers));
             
-            console.log(`User ${userToKick} was kicked by admin ${currentUser}. Reason: ${reason || 'No reason provided'}`);
+            console.log(`Người dùng ${userToKick} đã bị kick bởi admin ${currentUser}. Reason: ${reason || 'No reason provided'}`);
         } else {
-            console.log(`Failed to kick user ${userToKick} (not found or is admin)`);
+            console.log(`Không thể kick người dùng ${userToKick} (Ban)`);
             socket.emit('kick error', { 
                 message: isKickedUserAdmin ? 
                     'Không thể kick tài khoản admin khác!' : 
@@ -360,7 +338,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({
@@ -369,29 +346,25 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Thêm middleware để log các sự kiện quan trọng
 io.use((socket, next) => {
     const time = new Date().toISOString().replace('T', ' ').slice(0, 19);
-    console.log(`[${time}] New connection attempt`);
+    console.log(`[${time}] Cố gắng kết nối mới`);
     next();
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log('Current time (Hanoi):', formatTimeUTC7(new Date()));
+    console.log(`Máy chủ đang chạy ở cổng ${PORT}`);
+    console.log('Thời gian hiện tại (Hanoi):', formatTimeUTC7(new Date()));
 });
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
     http.close(() => {
-        console.log('Server shutting down...');
+        console.log('Máy chủ đang đóng...');
         process.exit(0);
     });
 });
 
-// Clean up admin sessions periodically
 setInterval(() => {
     const now = Date.now();
     const oneDay = 24 * 60 * 60 * 1000;
@@ -401,4 +374,4 @@ setInterval(() => {
             authenticatedAdmins.delete(admin);
         }
     });
-}, 60 * 60 * 1000); // Check every hour
+}, 60 * 60 * 1000);

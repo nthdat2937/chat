@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat | TD Web</title>
-    <link
-      rel="icon"
-      href="https://cdn.glitch.global/f61a2915-cde6-4e38-b016-504cda6e4656/2025_03_26_04h_Kleki-removebg-preview.png?v=1742993178317"
-    />
+    <link rel="icon" href="https://cdn.glitch.global/f61a2915-cde6-4e38-b016-504cda6e4656/2025_03_26_04h_Kleki-removebg-preview.png?v=1742993178317"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * {
@@ -514,7 +511,7 @@
             color: #ff009b;
             padding: 4px;
             cursor: pointer;
-            display: none;  /* Hidden by default, shown on mobile */
+            display: none;
         }
 
         @keyframes fadeIn {
@@ -547,7 +544,7 @@
             }
 
             .online-users {
-                display: none; /* Hidden by default on mobile */
+                display: none;
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -563,27 +560,27 @@
             }
 
             .toggle-users-btn {
-                display: flex !important; /* Force hiển thị trên mobile */
+                display: flex !important;
                 align-items: center;
                 justify-content: center;
                 width: 40px;
                 height: 40px;
                 padding: 0;
                 border-radius: 50%; 
-                position: absolute;  /* Đổi thành absolute */
-                right: 70px;        /* Thêm right để nút không đè lên nút logout */
-                top: 50%;           /* Căn giữa theo chiều dọc */
-                transform: translateY(-50%); /* Căn giữa theo chiều dọc */
+                position: absolute;
+                right: 70px;
+                top: 50%;
+                transform: translateY(-50%);
             }
 
             .header {
-                flex-direction: row !important; /* Override previous column direction */
+                flex-direction: row !important;
                 justify-content: space-between;
                 align-items: center;
                 padding: 8px 16px;
                 gap: 8px;
                 height: auto;
-                position: relative;  /* Thêm position relative */
+                position: relative;
             }
 
             .header .user-info {
@@ -591,7 +588,7 @@
             }
 
             .current-time {
-                display: none; /* Hide on mobile to save space */
+                display: none;
             }
 
             .logout-btn {
@@ -603,11 +600,11 @@
             }
 
             .logout-btn i {
-                margin: 0; /* Remove icon margin */
+                margin: 0;
             }
             
             .logout-btn span {
-                display: none; /* Hide "Đăng xuất" text */
+                display: none;
             }
 
             .chat-container {
@@ -679,7 +676,7 @@
             }
 
             .close-panel-btn {
-                display: block;  /* Show on mobile */
+                display: block;
             }
         }
 
@@ -791,7 +788,6 @@
             }
         }
 
-        /* Prevent copying/inspecting */
         * {
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -807,7 +803,6 @@
             pointer-events: none;
         }
 
-        /* Allow selection only in input fields */
         input {
             -webkit-user-select: text;
             -moz-user-select: text;
@@ -862,12 +857,12 @@
     <div class="header">
         <div class="user-info">
             <i class="fas fa-user"></i>
-            <span id="username">#</span>
+            <span id="username">nthdat2937</span>
         </div>
         <button class="toggle-users-btn" onclick="toggleUsers()">
             <i class="fas fa-users"></i>
         </button>
-        <span class="current-time" id="currentTime">#</span>
+        <span class="current-time" id="currentTime">2025-03-30 04:07:10</span>
         <button class="logout-btn" onclick="logout()">
             <i class="fas fa-sign-out-alt"></i>
             <span>Đăng xuất</span>
@@ -943,7 +938,6 @@
         window.location.href = '/';
     }
 
-    // Kiểm tra tên người dùng có chứa ký tự cấm không (trừ admin)
     if (!adminSessionToken && /[<>/]/.test(username)) {
         alert('Tên người dùng không được chứa các ký tự: <, >, /');
         localStorage.removeItem('chatUsername');
@@ -969,7 +963,6 @@
         sessionToken: adminSessionToken
     });
 
-    // Add auth error handler
     socket.on('auth error', (data) => {
         alert(data.message);
         localStorage.removeItem('chatUsername');
@@ -983,7 +976,7 @@
     const input = document.getElementById('m');
     const userList = document.getElementById('userList');
     const typingIndicator = document.getElementById('typingIndicator');
-    const privateChats = new Map(); // Store private chat messages
+    const privateChats = new Map();
 
     let typingTimeout;
 
@@ -995,7 +988,6 @@
         e.preventDefault();
         const message = input.value.trim();
 
-        // Kiểm tra tin nhắn có chứa ký tự cấm không (trừ admin)
         if (!adminSessionToken && /[<>/]/.test(message)) {
             alert('Tin nhắn không được chứa các ký tự: <, >, /');
             return false;
@@ -1034,11 +1026,11 @@
         }
 
         const reason = prompt(`Nhập lý do kick người dùng ${userToKick}:`);
-        if (reason !== null) { // Only proceed if user didn't click Cancel
+        if (reason !== null) {
             const kickData = {
                 userToKick,
                 adminToken,
-                reason: reason.trim() // Send the exact reason, don't set default
+                reason: reason.trim()
             };
             socket.emit('kick user', kickData);
         }
@@ -1051,7 +1043,6 @@
     socket.on('user kicked', (data) => {
         const div = document.createElement('div');
         div.className = 'system-message kick-notification';
-        // Only add the reason text if there actually is a reason
         const reasonText = data.reason ? ` • Lý do: ${data.reason}` : '';
         div.textContent = `'${data.username}' đã bị kick bởi ${data.byUser} • ${data.time}${reasonText}`;
         messages.appendChild(div);
@@ -1197,7 +1188,6 @@
                 !userData.isBot
             ) ? `<a class="kick-btn" onclick="event.stopPropagation(); kickUser('${userName}')">x</a>`:'';
             
-            // Kiểm tra vai trò
             const isAdmin = userName === 'nthdat2937' || userData.sessionToken;
             const isBot = userData.isBot;
             
@@ -1243,17 +1233,14 @@
     });
 
     socket.on('private message', (data) => {
-        // Store received message
         if (!privateChats.has(data.from)) {
             privateChats.set(data.from, []);
         }
         privateChats.get(data.from).push(data);
         
-        // If chat window is not open with this user, open it
         if (currentPrivateChat !== data.from) {
             startPrivateChat(data.from);
         } else {
-            // If chat is already open, just append the message
             const privateMessages = document.getElementById('privateMessages');
             const msgDiv = document.createElement('div');
             msgDiv.className = 'message received';
@@ -1273,12 +1260,11 @@
     let currentPrivateChat = null;
 
     function startPrivateChat(targetUser) {
-        if (targetUser === username) return; // Không chat với chính mình
+        if (targetUser === username) return;
         currentPrivateChat = targetUser;
         document.getElementById('privateChatTitle').textContent = `Chat với ${targetUser}`;
         document.getElementById('privateChatModal').style.display = 'flex';
         
-        // Load existing messages if any
         if (!privateChats.has(targetUser)) {
             privateChats.set(targetUser, []);
         }
@@ -1286,7 +1272,6 @@
         const privateMessages = document.getElementById('privateMessages');
         privateMessages.innerHTML = '';
         
-        // Display stored messages
         const messages = privateChats.get(targetUser);
         messages.forEach(msg => {
             const msgDiv = document.createElement('div');
@@ -1327,16 +1312,13 @@
                 time: time
             };
 
-            // Store message in local memory
             if (!privateChats.has(currentPrivateChat)) {
                 privateChats.set(currentPrivateChat, []);
             }
             privateChats.get(currentPrivateChat).push(messageData);
 
-            // Send to server
             socket.emit('private message', messageData);
             
-            // Display message
             const privateMessages = document.getElementById('privateMessages');
             const msgDiv = document.createElement('div');
             msgDiv.className = 'message sent';
@@ -1355,7 +1337,6 @@
         }
     }
 
-    // Thêm event listener cho input private message
     document.getElementById('privateMessageInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             sendPrivateMessage();
@@ -1385,11 +1366,9 @@
         e.returnValue = '';
     });
 
-    // Add security measures
-    document.addEventListener('contextmenu', e => e.preventDefault()); // Disable right click
+    document.addEventListener('contextmenu', e => e.preventDefault());
     
     document.addEventListener('keydown', function(e) {
-        // Disable F12, Ctrl+Shift+I/J/C, Ctrl+U
         if (
             e.key === 'F12' || 
             (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
@@ -1400,7 +1379,6 @@
         }
     });
 
-    // Detect DevTools
     let devtools = false;
     const threshold = 160;
     
@@ -1418,7 +1396,6 @@
         }
     }
 
-    // Check periodically for DevTools
     setInterval(emitCheck, 1000);
 </script>
 </body>
