@@ -563,8 +563,17 @@
             }
 
             .toggle-users-btn {
-                display: block; /* Chỉ hiển thị trên mobile */
-                order: 2;
+                display: flex !important; /* Force hiển thị trên mobile */
+                align-items: center;
+                justify-content: center;
+                width: 40px;
+                height: 40px;
+                padding: 0;
+                border-radius: 50%; 
+                position: absolute;  /* Đổi thành absolute */
+                right: 70px;        /* Thêm right để nút không đè lên nút logout */
+                top: 50%;           /* Căn giữa theo chiều dọc */
+                transform: translateY(-50%); /* Căn giữa theo chiều dọc */
             }
 
             .header {
@@ -574,6 +583,7 @@
                 padding: 8px 16px;
                 gap: 8px;
                 height: auto;
+                position: relative;  /* Thêm position relative */
             }
 
             .header .user-info {
@@ -695,7 +705,7 @@
             }
 
             .toggle-users-btn {
-                display: none !important; /* Force ẩn trên desktop */
+                display: none !important;
             }
         }
 
@@ -828,7 +838,7 @@
         }
 
         .toggle-users-btn {
-            display: none; /* Ẩn mặc định */
+            display: none;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
@@ -837,6 +847,7 @@
             cursor: pointer;
             font-size: 0.9em;
             backdrop-filter: blur(10px);
+            order: 2;
         }
     </style>
 </head>
