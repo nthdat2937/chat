@@ -1062,7 +1062,30 @@
         const files = Array.from(event.target.files);
         if (!files.length) return;
 
+        const allowedTypes = [
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/pdf',
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/plain',
+            'audio/mpeg',
+            'video/mp4',
+            'application/zip',
+            'application/x-rar-compressed'
+        ];
+
         for (const file of files) {
+            if (!allowedTypes.includes(file.type)) {
+                alert(`Loại file "${file.type}" không được hỗ trợ!`);
+                continue;
+            }
+
             const safeFilename = sanitizeFilename(file.name);
             const formData = new FormData();
             formData.append('file', file, safeFilename);
@@ -1083,9 +1106,12 @@
                         type: isImageFile(safeFilename) ? 'image' : 'file'
                     };
                     socket.emit('file message', fileMessage);
+                } else {
+                    alert(`Lỗi khi tải lên file: ${data.message || 'Không xác định'}`);
                 }
             } catch (error) {
                 console.error('Lỗi tải lên tập tin:', error);
+                alert('Có lỗi xảy ra khi tải lên file. Vui lòng thử lại!');
             }
         }
 
@@ -1107,6 +1133,8 @@
             docx: 'fas fa-file-word',
             xls: 'fas fa-file-excel',
             xlsx: 'fas fa-file-excel',
+            ppt: 'fas fa-file-powerpoint',
+            pptx: 'fas fa-file-powerpoint',
             jpg: 'fas fa-file-image',
             jpeg: 'fas fa-file-image',
             png: 'fas fa-file-image',
@@ -1115,9 +1143,10 @@
             rar: 'fas fa-file-archive',
             txt: 'fas fa-file-alt',
             mp3: 'fas fa-file-audio',
-            mp4: 'fas fa-file-video'
+            mp4: 'fas fa-file-video',
+            default: 'fas fa-file'
         };
-        return icons[ext] || 'fas fa-file';
+        return icons[ext] || icons.default;
     }
 
     socket.on('chat message', (msg) => {
