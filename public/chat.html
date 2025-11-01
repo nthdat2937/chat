@@ -1063,22 +1063,28 @@
         if (!files.length) return;
 
         const allowedTypes = [
-            'application/msword',
-            'application/wps-office.docx',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/pdf',
-            'image/jpeg',
-            'image/png',
-            'image/gif',
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'application/vnd.ms-powerpoint',
-            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-            'text/plain',
-            'audio/mpeg',
-            'video/mp4',
-            'application/zip',
-            'application/x-rar-compressed'
+            'application/msword', // .doc
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+            'application/vnd.ms-word.document.macroEnabled.12', // .docm
+            'application/pdf', // .pdf
+            'image/jpeg', // .jpg, .jpeg
+            'image/png', // .png
+            'image/gif', // .gif
+            'image/webp', // .webp
+            'application/vnd.ms-excel', // .xls
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+            'application/vnd.ms-powerpoint', // .ppt
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+            'text/plain', // .txt
+            'audio/mpeg', // .mp3
+            'audio/wav', // .wav
+            'video/mp4', // .mp4
+            'video/webm', // .webm
+            'application/x-zip-compressed', // .zip
+            'application/zip', // alternative zip mime type
+            'application/x-rar-compressed', // .rar
+            'application/octet-stream', // general binary
+            'application/x-msdownload' // .exe and other executables
         ];
 
         for (const file of files) {
